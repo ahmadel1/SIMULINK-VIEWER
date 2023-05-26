@@ -40,6 +40,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 
 
 public class Main extends Application {
@@ -92,7 +94,6 @@ public class Main extends Application {
             int key = pair.getKey();
             int value = pair.getValue();
             if(recPorts[value] == 0 )recPorts[value] = 1;
-            //if(rectangles[key].getX() == 1040 && rectangles[key].getY() == 283)continue;
             docBreakDown.createRightAngleLine(rectangles[key], rectangles[value], recPorts[value], simulationPane);   
             recPorts[value]--;
         }
@@ -306,35 +307,52 @@ class docBreakDown{
 	
 	public static void createRightAngleLine(Rectangle startRect, Rectangle endRect, int endPorts, Pane pane) {
 	    double startX, startY, endX, endY, breakX, breakY;
-	    
-	    if (startRect.getX() + startRect.getWidth() < endRect.getX()+ startRect.getWidth()) {
+	    int flag = 0;
+	    if(endRect.getX() == 1040 && endRect.getY() == 209) {
+	    	flag = 1;
+	    	endRect.setY(endPorts*4+endRect.getY());
+	    	System.out.println("yarab: "  + endRect.getY());
+	    }
+	    if (startRect.getX() + startRect.getWidth() < endRect.getX() + startRect.getWidth()) {
 	        // Start rectangle is to the left of the end rectangle
 	        startX = startRect.getX() + startRect.getWidth();
 	        startY = startRect.getY() + startRect.getHeight() / 2;
-	        endX = endRect.getX() + (endRect.getWidth()/2);
-	        endY = endRect.getY() + (endRect.getHeight()/2);
+	        endX = endRect.getX() + endRect.getWidth() / 2;
+	        endY = endRect.getY() + endRect.getHeight() / 2;
 	        breakX = startX + (endX - startX) / 2;
 	        breakY = endY;
 	    } else {
 	        // Start rectangle is to the right of the end rectangle
-	    	startX = startRect.getX() + startRect.getWidth();
+	        startX = startRect.getX();
 	        startY = startRect.getY() + startRect.getHeight() / 2;
-	        endX = endRect.getX() + (endRect.getWidth());
-	        endY = endRect.getY() + (endRect.getHeight()/2);;
-	        
+	        endX = endRect.getX() + endRect.getWidth();
+	        endY = endRect.getY() + endRect.getHeight() / 2;
 	        breakX = startX + (startX - endX) / 2;
 	        breakY = endY;
 	    }
 
-	    Line segment1 = new Line(startX, startY, breakX, startY);
-	    Line segment2 = new Line(breakX, startY, breakX, breakY);
-	    Line segment3 = new Line(breakX, breakY, endX, breakY);
-	    segment1.setStroke(Color.CYAN);	    
-        segment2.setStroke(Color.CYAN);
-        segment3.setStroke(Color.CYAN);
-        
-        
-        pane.getChildren().addAll(segment1, segment2, segment3);
+	    
+	    if(startRect.getX() == 1040 && startRect.getY() == 283) {
+	    	Line segment1 = new Line(endRect.getX()+endRect.getWidth()*2, endRect.getY()+endRect.getWidth()/2-1, endRect.getX()+endRect.getWidth()*2, startRect.getY()+endRect.getWidth()/2);
+		    Line segment2 = new Line(endRect.getX()+endRect.getWidth()*2,   startRect.getY()+startRect.getWidth()/2-1, startRect.getX()+startRect.getWidth(), startRect.getY()+startRect.getWidth()/2);
+		    Line segment3 = new Line(0, 0, 0, 0);
+		    segment1.setStroke(Color.CYAN);
+		    segment2.setStroke(Color.CYAN);
+		    segment3.setStroke(Color.CYAN);
+	        pane.getChildren().addAll(segment1, segment2, segment3);
+
+	    }else {
+	    	Line segment1 = new Line(startX, startY, breakX, startY);
+		    Line segment2 = new Line(breakX, startY, breakX, breakY);
+		    Line segment3 = new Line(breakX, breakY, endX, breakY);
+		    segment1.setStroke(Color.CYAN);
+		    segment2.setStroke(Color.CYAN);
+		    segment3.setStroke(Color.CYAN);
+	        pane.getChildren().addAll(segment1, segment2, segment3);
+
+	    }
+	    if(flag==1)endRect.setY(209);
+
 	}
 
 	
