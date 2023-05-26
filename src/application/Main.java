@@ -35,6 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
@@ -59,6 +60,7 @@ public class Main extends Application {
 				try {
 					readFile();
 					primaryStage.setScene(SimulationWindow());
+					primaryStage.centerOnScreen();
 				} catch (IOException | SAXException | ParserConfigurationException e1) {
 					e1.printStackTrace();
 				}
@@ -90,6 +92,7 @@ public class Main extends Application {
             int key = pair.getKey();
             int value = pair.getValue();
             if(recPorts[value] == 0 )recPorts[value] = 1;
+            //if(rectangles[key].getX() == 1040 && rectangles[key].getY() == 283)continue;
             docBreakDown.createRightAngleLine(rectangles[key], rectangles[value], recPorts[value], simulationPane);   
             recPorts[value]--;
         }
@@ -179,12 +182,10 @@ class docBreakDown{
 			Element tmp = (Element) Main.blocks.item(i);
 			NodeList Ptags = tmp.getElementsByTagName("P");
 			for(int j=0; Ptags.getLength()>j; j++) {
-				System.out.println("ana da5lt");
 				Element tmpP = (Element) Ptags.item(j);
 				String name = tmpP.getAttribute("Name");
 				System.out.println(name);
 				if (name.equals("Ports")) {
-					System.out.println("ana hena");
 					int noOfBlocks = tmpP.getTextContent().charAt(1) - 48;
 					blocksPorts[i] = noOfBlocks;
 					System.out.println(noOfBlocks);
@@ -246,7 +247,6 @@ class docBreakDown{
 			if(tmp.getElementsByTagName("Branch").getLength()>0) {
 				int sourceBlock = -1;
 				int distBlock = -1;
-				System.out.println("a7aaaaaaa");
 				NodeList Ptags = tmp.getElementsByTagName("P");
 				for(int j = 0; Ptags.getLength()>j; j++) {
 					Element tmpP = (Element) Ptags.item(j);
@@ -306,18 +306,16 @@ class docBreakDown{
 	
 	public static void createRightAngleLine(Rectangle startRect, Rectangle endRect, int endPorts, Pane pane) {
 	    double startX, startY, endX, endY, breakX, breakY;
-	    if (startRect.getX() + startRect.getWidth() < endRect.getX()) {
+	    
+	    if (startRect.getX() + startRect.getWidth() < endRect.getX()+ startRect.getWidth()) {
 	        // Start rectangle is to the left of the end rectangle
-	    	System.out.println("A77a");
 	        startX = startRect.getX() + startRect.getWidth();
 	        startY = startRect.getY() + startRect.getHeight() / 2;
 	        endX = endRect.getX() + (endRect.getWidth()/2);
 	        endY = endRect.getY() + (endRect.getHeight()/2);
-	        
 	        breakX = startX + (endX - startX) / 2;
 	        breakY = endY;
 	    } else {
-	    	System.out.println("5555555555");
 	        // Start rectangle is to the right of the end rectangle
 	    	startX = startRect.getX() + startRect.getWidth();
 	        startY = startRect.getY() + startRect.getHeight() / 2;
@@ -334,10 +332,11 @@ class docBreakDown{
 	    segment1.setStroke(Color.CYAN);	    
         segment2.setStroke(Color.CYAN);
         segment3.setStroke(Color.CYAN);
-	    
-	    pane.getChildren().addAll(segment1, segment2, segment3);
+        
+        
+        pane.getChildren().addAll(segment1, segment2, segment3);
 	}
-	
+
 	
 
 }
