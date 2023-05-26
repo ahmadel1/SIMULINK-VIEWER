@@ -60,7 +60,7 @@ public class Main extends Application {
 				filePath = file.toString();
 				System.out.println(filePath);
 				try {
-					readFile();
+					ParseFile.readFile();
 					primaryStage.setScene(SimulationWindow());
 					primaryStage.centerOnScreen();
 				} catch (IOException | SAXException | ParserConfigurationException e1) {
@@ -138,23 +138,7 @@ public class Main extends Application {
 		launch(args);
 	}
 	
-	public static void readFile() throws IOException, SAXException, ParserConfigurationException {
-		String filePath = "D:\\simulinkViewer\\Example.mdl";
-		String fileContent = new String(Files.readAllBytes(Paths.get(filePath)));
-		 
-		 //specifying the start and end of the needed part 
-		int beginHere = fileContent.indexOf("__MWOPC_PART_BEGIN__ /simulink/systems/system_root.xml");
-		int start = fileContent.indexOf("<System>", beginHere); 
-		int end = fileContent.indexOf("</System>", beginHere); 
-		String fileInTxt = fileContent.substring(start, end+10);
-		 
-		 //converting needed part to xml file 
-	    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	    doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(fileInTxt)));
-	  
-	    blocks = doc.getElementsByTagName("Block");
-	    lines = doc.getElementsByTagName("Line");
-	}
+	
 }
 
 
