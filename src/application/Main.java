@@ -19,15 +19,22 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
 
 public class Main extends Application {
@@ -47,7 +54,6 @@ public class Main extends Application {
 				System.out.println(filePath);
 				try {
 					readFile();
-					docBreakDown.getBlocksPositions();
 					primaryStage.setScene(SimulationWindow());
 				} catch (IOException | SAXException | ParserConfigurationException e1) {
 					e1.printStackTrace();
@@ -64,17 +70,45 @@ public class Main extends Application {
 			e.printStackTrace();
 		}
 	}
-	
 	public Scene SimulationWindow() {
-		BorderPane simulationPane = new BorderPane(); 
+		Pane simulationPane = new Pane(); 
 		Scene simulationScene = new Scene(simulationPane, 400, 400);
-		Rectangle rect = new Rectangle(200, 100); // for test
-		rect.setFill(Color.WHITE);
-		rect.setStroke(Color.BLACK);
-		simulationPane.setCenter(rect);
+		int[][] blocksPos = docBreakDown.getBlocksPositions();
+		
+		for(int i = 0; Main.blocks.getLength() > i; i++) {
+			double left = blocksPos[i][0];
+			double top = blocksPos[i][1];
+		    double width = Math.abs(left-blocksPos[i][2])*1.5; 
+		    double height = Math.abs(top-blocksPos[i][3])*1.5;
+		    VBox tmp = createBox(i, blocksPos, height, width);
+		    tmp.setLayoutX(left);
+	        tmp.setLayoutY(top); 
+			simulationPane.getChildren().add(tmp);
+		}
+
 		return simulationScene;
 	}
-	
+	public VBox createBox(int i, int[][] blocksPos, double height, double width) {
+		 
+		 docBreakDown.getBlocksAttributes();
+		 String recName = docBreakDown.blocksAttributes.get(i).get("Name");
+		 System.out.println(recName);
+         Label label = new Label(recName);
+		 
+		 VBox vBox = new VBox(5);
+		 vBox.setAlignment(Pos.CENTER);
+		 
+	     Rectangle rec = new Rectangle();
+	     rec.setHeight(height);
+	     rec.setWidth(width);
+	     rec.setArcWidth(10);
+	     rec.setArcHeight(10);
+	     rec.setFill(Color.WHITE);
+	     rec.setStroke(Color.CYAN);
+	     
+		 vBox.getChildren().addAll(rec, label);
+		 return vBox;
+	}
 	public static void main(String[] args){
 		launch(args);
 	}
@@ -97,12 +131,25 @@ public class Main extends Application {
 	    lines = doc.getElementsByTagName("Line");
 	}
 }
+class createJavaFx{
+	
+	public StackPane createRectangleWithText(double width, double height, double x, double y, Color color, String text) {
+        Rectangle rectangle = new Rectangle(width, height, color);
+        Text textNode = new Text(text);
+        textNode.setFont(Font.font(14));
 
+        StackPane stackPane = new StackPane();
+        stackPane.getChildren().addAll(rectangle, textNode);
+        stackPane.setLayoutX(x);
+        stackPane.setLayoutY(y);
+
+        return stackPane;
+    }
+}
 class docBreakDown{
 	docBreakDown(){};
 	public static Vector<Map<String, String>> blocksAttributes = new Vector<>();
 	public static int[][] blocksPositions = new int[Main.blocks.getLength()][4];
-	
 	public static void getBlocksAttributes() {
 		for(int i = 0; Main.blocks.getLength() > i; i++) {
 			Map<String, String>tmp = new HashMap<>();
@@ -115,7 +162,7 @@ class docBreakDown{
 		}
 	}	
 	
-	public static void getBlocksPositions() {
+	public static int[][] getBlocksPositions() {
 		for(int i = 0; Main.blocks.getLength() > i; i++) {
 			Element tmp1 = (Element) Main.blocks.item(i);
 			NodeList Ptags = tmp1.getElementsByTagName("P");
@@ -140,6 +187,8 @@ class docBreakDown{
 			}
 			System.out.println();
 		}
+		return blocksPositions;
+		
 	}
 	
 }
