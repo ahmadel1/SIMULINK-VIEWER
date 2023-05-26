@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -23,6 +25,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -31,6 +34,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
@@ -70,16 +74,32 @@ public class Main extends Application {
 			e.printStackTrace();
 		}
 	}
+	
 	public Scene SimulationWindow() {
 		Pane simulationPane = new Pane(); 
-		Scene simulationScene = new Scene(simulationPane, 400, 400);
+		Scene simulationScene = new Scene(simulationPane);
 		int[][] blocksPos = docBreakDown.getBlocksPositions();
+		
+		List<Pair<Integer, Integer>> pairs = docBreakDown.getLines();
+		Rectangle[] rectangles = docBreakDown.getRectangles();
+		int[] recPorts = docBreakDown.getBlocksPorts();
+		for(int i = 0; 5>i; i++) {
+			System.out.println(recPorts[i]);
+		}
+		for (Pair<Integer, Integer> pair : pairs) {
+            int key = pair.getKey();
+            int value = pair.getValue();
+            if(recPorts[value] == 0 )recPorts[value] = 1;
+            docBreakDown.createRightAngleLine(rectangles[key], rectangles[value], recPorts[value], simulationPane);   
+            recPorts[value]--;
+        }
+		
 		
 		for(int i = 0; Main.blocks.getLength() > i; i++) {
 			double left = blocksPos[i][0];
 			double top = blocksPos[i][1];
-		    double width = Math.abs(left-blocksPos[i][2])*1.5; 
-		    double height = Math.abs(top-blocksPos[i][3])*1.5;
+		    double width = Math.abs(left-blocksPos[i][2]); 
+		    double height = Math.abs(top-blocksPos[i][3]);
 		    VBox tmp = createBox(i, blocksPos, height, width);
 		    tmp.setLayoutX(left);
 	        tmp.setLayoutY(top); 
@@ -94,7 +114,7 @@ public class Main extends Application {
 		 String recName = docBreakDown.blocksAttributes.get(i).get("Name");
 		 System.out.println(recName);
          Label label = new Label(recName);
-		 
+
 		 VBox vBox = new VBox(5);
 		 vBox.setAlignment(Pos.CENTER);
 		 
@@ -109,6 +129,7 @@ public class Main extends Application {
 		 vBox.getChildren().addAll(rec, label);
 		 return vBox;
 	}
+	
 	public static void main(String[] args){
 		launch(args);
 	}
@@ -131,24 +152,15 @@ public class Main extends Application {
 	    lines = doc.getElementsByTagName("Line");
 	}
 }
-class createJavaFx{
-	
-	public StackPane createRectangleWithText(double width, double height, double x, double y, Color color, String text) {
-        Rectangle rectangle = new Rectangle(width, height, color);
-        Text textNode = new Text(text);
-        textNode.setFont(Font.font(14));
 
-        StackPane stackPane = new StackPane();
-        stackPane.getChildren().addAll(rectangle, textNode);
-        stackPane.setLayoutX(x);
-        stackPane.setLayoutY(y);
 
-        return stackPane;
-    }
-}
+
+
+
 class docBreakDown{
 	docBreakDown(){};
 	public static Vector<Map<String, String>> blocksAttributes = new Vector<>();
+	public static int[] blocksPorts = new int[Main.blocks.getLength()];
 	public static int[][] blocksPositions = new int[Main.blocks.getLength()][4];
 	public static void getBlocksAttributes() {
 		for(int i = 0; Main.blocks.getLength() > i; i++) {
@@ -161,6 +173,27 @@ class docBreakDown{
 			blocksAttributes.add(tmp);
 		}
 	}	
+	
+	public static int[] getBlocksPorts(){
+		for(int i = 0; Main.blocks.getLength()>i; i++) {
+			Element tmp = (Element) Main.blocks.item(i);
+			NodeList Ptags = tmp.getElementsByTagName("P");
+			for(int j=0; Ptags.getLength()>j; j++) {
+				System.out.println("ana da5lt");
+				Element tmpP = (Element) Ptags.item(j);
+				String name = tmpP.getAttribute("Name");
+				System.out.println(name);
+				if (name.equals("Ports")) {
+					System.out.println("ana hena");
+					int noOfBlocks = tmpP.getTextContent().charAt(1) - 48;
+					blocksPorts[i] = noOfBlocks;
+					System.out.println(noOfBlocks);
+					break;
+				}
+			}
+		}
+		return blocksPorts;
+	}
 	
 	public static int[][] getBlocksPositions() {
 		for(int i = 0; Main.blocks.getLength() > i; i++) {
@@ -190,5 +223,121 @@ class docBreakDown{
 		return blocksPositions;
 		
 	}
+
+	public static int getBlockInd(char id) {
+		getBlocksAttributes();
+		int notFound = -1;
+		for(int i = 0; Main.blocks.getLength()>i; i++) {
+			char tmp = blocksAttributes.get(i).get("SID").charAt(0);
+			if(tmp == id) return i;
+		}
+		return notFound;
+	}
 	
+	
+	public static List<Pair<Integer, Integer>> getLines() {
+		
+		List<Pair<Integer, Integer>> pairList = new ArrayList<>();
+		
+		for(int i = 0; Main.lines.getLength()>i; i++) {
+			
+			Element tmp = (Element)  Main.lines.item(i);
+			//check if line has branches or not
+			if(tmp.getElementsByTagName("Branch").getLength()>0) {
+				int sourceBlock = -1;
+				int distBlock = -1;
+				System.out.println("a7aaaaaaa");
+				NodeList Ptags = tmp.getElementsByTagName("P");
+				for(int j = 0; Ptags.getLength()>j; j++) {
+					Element tmpP = (Element) Ptags.item(j);
+					String name = tmpP.getAttribute("Name");
+					if (name.equals("Src")) {
+				        char src= tmpP.getTextContent().charAt(0);
+				        sourceBlock = getBlockInd(src);  
+					 }else if (name.equals("Dst")) {
+					    char dst= tmpP.getTextContent().charAt(0);	
+					    distBlock = getBlockInd(dst);
+					 }
+					 if(distBlock!=-1 && sourceBlock!=-1) {
+						 pairList.add(new Pair<>(sourceBlock, distBlock));
+						 distBlock=-1;
+					 }
+					System.out.println(tmpP.getTextContent());
+				}
+				
+				continue;
+			}else {
+				NodeList Ptags = tmp.getElementsByTagName("P");
+				int sourceBlock = -1;
+				int distBlock = -1;
+				for(int j = 0; Ptags.getLength()>j; j++) {
+					
+					Element tmpP = (Element) Ptags.item(j);
+					String name = tmpP.getAttribute("Name");
+					
+					 if (name.equals("Src")) {
+				        char src= tmpP.getTextContent().charAt(0);
+				        sourceBlock = getBlockInd(src);
+				        
+					 }else if (name.equals("Dst")) {
+					    char dst= tmpP.getTextContent().charAt(0);	
+					    distBlock = getBlockInd(dst);
+					 }
+					 if(distBlock!=-1 && sourceBlock!=-1) {
+						 pairList.add(new Pair<>(sourceBlock, distBlock));
+						 break;
+					 }
+				}
+				
+			 }
+		}
+		return pairList;
+	}
+	
+	public static Rectangle[] getRectangles() {
+		Rectangle[] rectangles = new Rectangle[Main.blocks.getLength()];
+		int[][] positions = getBlocksPositions();
+		for (int i = 0; i < rectangles.length; i++) {
+            Rectangle rectangle = new Rectangle(positions[i][0], positions[i][1], Math.abs(positions[i][0]-positions[i][2]), Math.abs(positions[i][1]-positions[i][3]));
+            rectangles[i] = rectangle;
+        }
+		return rectangles;
+	}
+	
+	public static void createRightAngleLine(Rectangle startRect, Rectangle endRect, int endPorts, Pane pane) {
+	    double startX, startY, endX, endY, breakX, breakY;
+	    if (startRect.getX() + startRect.getWidth() < endRect.getX()) {
+	        // Start rectangle is to the left of the end rectangle
+	    	System.out.println("A77a");
+	        startX = startRect.getX() + startRect.getWidth();
+	        startY = startRect.getY() + startRect.getHeight() / 2;
+	        endX = endRect.getX() + (endRect.getWidth()/2);
+	        endY = endRect.getY() + (endRect.getHeight()/2);
+	        
+	        breakX = startX + (endX - startX) / 2;
+	        breakY = endY;
+	    } else {
+	    	System.out.println("5555555555");
+	        // Start rectangle is to the right of the end rectangle
+	    	startX = startRect.getX() + startRect.getWidth();
+	        startY = startRect.getY() + startRect.getHeight() / 2;
+	        endX = endRect.getX() + (endRect.getWidth());
+	        endY = endRect.getY() + (endRect.getHeight()/2);;
+	        
+	        breakX = startX + (startX - endX) / 2;
+	        breakY = endY;
+	    }
+
+	    Line segment1 = new Line(startX, startY, breakX, startY);
+	    Line segment2 = new Line(breakX, startY, breakX, breakY);
+	    Line segment3 = new Line(breakX, breakY, endX, breakY);
+	    segment1.setStroke(Color.CYAN);	    
+        segment2.setStroke(Color.CYAN);
+        segment3.setStroke(Color.CYAN);
+	    
+	    pane.getChildren().addAll(segment1, segment2, segment3);
+	}
+	
+	
+
 }
